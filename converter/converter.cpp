@@ -1,5 +1,6 @@
 ﻿#include "converter.h"
 
+
 std::vector<std::string> split(const std::string& s, char delimiter) {
     std::vector<std::string> tokens;
     std::string token;
@@ -20,12 +21,12 @@ struct Trans
 };
 
 struct MealyState
-{ 
+{
     std::string curr;
     std::vector<Trans> transitions;
 };
 
-struct MooreState 
+struct MooreState
 {
     std::string state;
     std::string newState;
@@ -33,7 +34,7 @@ struct MooreState
     std::unordered_map<std::string, std::string> transitions; // input -> next state
 };
 
-std::unordered_set<std::string> findReachableStates(const std::vector<MooreState>& mooreAutomaton, const std::string& startState) 
+std::unordered_set<std::string> findReachableStates(const std::vector<MooreState>& mooreAutomaton, const std::string& startState)
 {
     std::unordered_set<std::string> reachableStates;
     std::queue<std::string> statesQueue;
@@ -41,21 +42,21 @@ std::unordered_set<std::string> findReachableStates(const std::vector<MooreState
     // Добавляем начальное состояние
     statesQueue.push(startState);
     reachableStates.insert(startState);
-    while (!statesQueue.empty()) 
+    while (!statesQueue.empty())
     {
         std::string currentState = statesQueue.front();
         statesQueue.pop();
 
         // Находим состояние в автомате
-        for (const auto& mooreState : mooreAutomaton) 
+        for (const auto& mooreState : mooreAutomaton)
         {
-            if (mooreState.newState == currentState) 
+            if (mooreState.newState == currentState)
             {
                 // Добавляем все состояния, достижимые через переходы
-                for (const auto& transition : mooreState.transitions) 
+                for (const auto& transition : mooreState.transitions)
                 {
                     const std::string& nextState = transition.second;
-                    if (reachableStates.find(nextState) == reachableStates.end()) 
+                    if (reachableStates.find(nextState) == reachableStates.end())
                     {
                         reachableStates.insert(nextState);
                         statesQueue.push(nextState);
@@ -70,14 +71,14 @@ std::unordered_set<std::string> findReachableStates(const std::vector<MooreState
 
 
 
-std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutomaton) 
+std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutomaton)
 {
 
     std::vector<MooreState> mooreAutomaton;
     std::set<std::string> stateOutputSet; // словарь
     std::unordered_map<std::string, std::string> eqNewStateOld; // first - old; second - new(q1, q2);
 
-    std::string startState = mealyAutomaton.begin()->curr; 
+    std::string startState = mealyAutomaton.begin()->curr;
     std::string mooreStartState;
     // Создаем состояния Мура на основе состояний Милли
 
@@ -90,7 +91,7 @@ std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutom
         {
             if (trans.nextPos == startState)
             {
-                if (currOutSym.empty()) 
+                if (currOutSym.empty())
                 {
                     currOutSym = trans.outSym;
                 }
@@ -102,6 +103,10 @@ std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutom
         }
     }
 
+    if (currOutSym.empty())
+    {
+        currOutSym = "-";
+    }
     for (const auto& pos : mealyAutomaton)
     {
         for (const auto& trans : pos.transitions)
@@ -123,6 +128,22 @@ std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutom
                 foundStartState = true;
                 break;
             }
+            else if (currOutSym == "-")
+            {
+                std::string mooreState = trans.nextPos + "_-";
+                std::string NewMooreStateName = "q0"; // начальное состояние для автомата мура
+                MooreState newMooreState;
+
+                stateOutputSet.insert(mooreState).second;
+                newMooreState.state = mooreState;
+                newMooreState.output = "-";
+                newMooreState.newState = NewMooreStateName;
+                mooreAutomaton.push_back(newMooreState);
+
+                eqNewStateOld[mooreState] = NewMooreStateName;
+                foundStartState = true;
+                break;
+            }
         }
         if (foundStartState)
         {
@@ -138,7 +159,7 @@ std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutom
         std::set<std::string> newNameStateSet;
         std::set<std::string> outSymSet;
         std::set<std::string> baseNameStateSet;
-        
+
         for (const auto& pos : mealyAutomaton)
         {
             for (const auto& trans : pos.transitions)
@@ -158,7 +179,7 @@ std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutom
                         newNameStateSet.insert(NewMooreStateName);
 
                         baseNameStateSet.insert(mooreState);
-                        
+
                         i++;
                     }
                 }
@@ -177,12 +198,14 @@ std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutom
             auto stateIt = newNameStateSet.begin();
             auto outIt = outSymSet.begin();
             auto baseStIt = baseNameStateSet.begin();
-            while (stateIt != newNameStateSet.end() && outIt != outSymSet.end() && baseStIt != baseNameStateSet.end()) 
+            while (stateIt != newNameStateSet.end() && outIt != outSymSet.end() && baseStIt != baseNameStateSet.end())
             {
                 MooreState mooreState;
                 mooreState.newState = *stateIt; //q1...
                 mooreState.output = *outIt; // y1....
                 mooreState.state = *baseStIt; //S0_y0 ...
+
+
                 tempMooreStates.push_back(mooreState);
                 std::string tempString = *stateIt;
                 eqNewStateOld[*baseStIt] = *stateIt;
@@ -196,17 +219,21 @@ std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutom
     }
 
     // Добавляем переходы для состояний Мура
-    for (auto& mooreState : mooreAutomaton) 
+    for (auto& mooreState : mooreAutomaton)
     {
+
         std::string baseState = mooreState.state.substr(0, mooreState.state.find('_'));
-        for (const auto& pos : mealyAutomaton) 
+
+        for (const auto& pos : mealyAutomaton)
         {
-            if (pos.curr == baseState) 
+            if (pos.curr == baseState)
             {
-                for (const auto& trans : pos.transitions) 
+                for (const auto& trans : pos.transitions)
                 {
                     std::string nextState = trans.nextPos + "_" + trans.outSym;
+                    std::cout << nextState << "\n";
                     std::string nextMooreState = eqNewStateOld[nextState];
+                    std::cout << nextMooreState << "\n";
                     mooreState.transitions[trans.inputSym] = nextMooreState;
                 }
             }
@@ -215,24 +242,27 @@ std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutom
 
 
     // Создаем новый вектор, который содержит только достижимые состояния
+    return mooreAutomaton;
     std::unordered_set<std::string> reachableStates = findReachableStates(mooreAutomaton, "q0"); // Начальное состояние
 
+
     std::vector<MooreState> cleanedMooreAutomaton;
-    for (const auto& mooreState : mooreAutomaton) 
+
+    for (const auto& mooreState : mooreAutomaton)
     {
-        std::cout << mooreState.newState << "\n";
-        if (reachableStates.find(mooreState.newState) != reachableStates.end()) 
+        if (reachableStates.find(mooreState.newState) != reachableStates.end())
         {
             cleanedMooreAutomaton.push_back(mooreState);
         }
     }
 
+
     return cleanedMooreAutomaton;
 }
 
-std::vector<MealyState> ReadMealyToVec(std::vector<MealyState>& positions,std::ifstream& file)
+std::vector<MealyState> ReadMealyToVec(std::vector<MealyState>& positions, std::ifstream& file)
 {
-   
+
     std::string line;
     std::getline(file, line);
     std::vector<std::string> tempRow = split(line, ';');
@@ -277,7 +307,7 @@ void ConvertMooreToMealy(std::ifstream& file, std::ofstream& outFile)
 
     std::unordered_map<std::string, std::string> stateToOut;
 
-    for (size_t i = 1; i < tempRowOut.size(); ++i) 
+    for (size_t i = 1; i < tempRowOut.size(); ++i)
     {
         stateToOut[tempRowStates[i]] = tempRowOut[i]; // выходной символ соответсвующий состоянию
         outFile << ";" << tempRowStates[i];
@@ -302,6 +332,7 @@ void WriteMooreToFile(std::vector<MooreState>& mooreAutomaton, std::ofstream& ou
 {
     if (outFile.is_open())
     {
+
         // Выходы состояний Мура (outputs)
         outFile << ";";
         for (const auto& state : mooreAutomaton)
@@ -341,16 +372,14 @@ void WriteMooreToFile(std::vector<MooreState>& mooreAutomaton, std::ofstream& ou
 
 }
 
-int main(int argc, char* argv[]) 
+int main(int argc, char* argv[])
 {
-    SetConsoleOutputCP(1251);
 
     std::string nameOperation;
 
     nameOperation = argv[1];
     std::string inputFileName = argv[2];
-    std::string outputFileName = argv[3]; 
-
+    std::string outputFileName = argv[3];
 
 
     std::ifstream file(inputFileName);
@@ -371,7 +400,6 @@ int main(int argc, char* argv[])
         std::vector<MooreState> mooreAutomaton = convertToMoore(mealyStates);
         WriteMooreToFile(mooreAutomaton, outFile);
 
-
     }
     else if (nameOperation == "moore-to-mealy")
     {
@@ -379,4 +407,5 @@ int main(int argc, char* argv[])
     }
     return 0;
 }
+
 
