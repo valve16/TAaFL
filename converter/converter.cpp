@@ -231,9 +231,9 @@ std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutom
                 for (const auto& trans : pos.transitions)
                 {
                     std::string nextState = trans.nextPos + "_" + trans.outSym;
-                    std::cout << nextState << "\n";
+                    //std::cout << nextState << "\n";
                     std::string nextMooreState = eqNewStateOld[nextState];
-                    std::cout << nextMooreState << "\n";
+                    //std::cout << nextMooreState << "\n";
                     mooreState.transitions[trans.inputSym] = nextMooreState;
                 }
             }
@@ -242,7 +242,6 @@ std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutom
 
 
     // Создаем новый вектор, который содержит только достижимые состояния
-    return mooreAutomaton;
     std::unordered_set<std::string> reachableStates = findReachableStates(mooreAutomaton, "q0"); // Начальное состояние
 
 
@@ -379,7 +378,8 @@ int main(int argc, char* argv[])
 
     nameOperation = argv[1];
     std::string inputFileName = argv[2];
-    std::string outputFileName = argv[3];
+    std::string outputFileName = argv[3];   
+    
 
 
     std::ifstream file(inputFileName);
