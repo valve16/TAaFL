@@ -80,7 +80,6 @@ std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutom
 
     std::string startState = mealyAutomaton.begin()->curr;
     std::string mooreStartState;
-    // Создаем состояния Мура на основе состояний Милли
 
     bool foundStartState = false;
     std::string currOutSym = "";
@@ -107,6 +106,8 @@ std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutom
     {
         currOutSym = "-";
     }
+
+
     for (const auto& pos : mealyAutomaton)
     {
         for (const auto& trans : pos.transitions)
@@ -128,27 +129,28 @@ std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutom
                 foundStartState = true;
                 break;
             }
-            else if (currOutSym == "-")
-            {
-                std::string mooreState = trans.nextPos + "_-";
-                std::string NewMooreStateName = "q0"; // начальное состояние для автомата мура
-                MooreState newMooreState;
-
-                stateOutputSet.insert(mooreState).second;
-                newMooreState.state = mooreState;
-                newMooreState.output = "-";
-                newMooreState.newState = NewMooreStateName;
-                mooreAutomaton.push_back(newMooreState);
-
-                eqNewStateOld[mooreState] = NewMooreStateName;
-                foundStartState = true;
-                break;
-            }
         }
         if (foundStartState)
         {
             break;
         }
+    }
+
+    if (currOutSym == "-")
+    {
+        std::string mooreState = startState + "_-";
+        std::string NewMooreStateName = "q0"; // начальное состояние для автомата мура
+        MooreState newMooreState;
+
+
+        stateOutputSet.insert(mooreState).second;
+        newMooreState.state = mooreState;
+        newMooreState.output = "-";
+        newMooreState.newState = NewMooreStateName;
+        mooreAutomaton.push_back(newMooreState);
+
+        eqNewStateOld[mooreState] = NewMooreStateName;
+        foundStartState = true;
     }
 
     int i = 1;
@@ -221,7 +223,6 @@ std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutom
     // Добавляем переходы для состояний Мура
     for (auto& mooreState : mooreAutomaton)
     {
-
         std::string baseState = mooreState.state.substr(0, mooreState.state.find('_'));
 
         for (const auto& pos : mealyAutomaton)
@@ -231,9 +232,7 @@ std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutom
                 for (const auto& trans : pos.transitions)
                 {
                     std::string nextState = trans.nextPos + "_" + trans.outSym;
-                    //std::cout << nextState << "\n";
                     std::string nextMooreState = eqNewStateOld[nextState];
-                    //std::cout << nextMooreState << "\n";
                     mooreState.transitions[trans.inputSym] = nextMooreState;
                 }
             }
@@ -258,6 +257,7 @@ std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutom
 
     return cleanedMooreAutomaton;
 }
+
 
 std::vector<MealyState> ReadMealyToVec(std::vector<MealyState>& positions, std::ifstream& file)
 {
