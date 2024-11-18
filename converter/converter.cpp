@@ -34,37 +34,50 @@ struct MooreState
     std::unordered_map<std::string, std::string> transitions; // input -> next state
 };
 
-std::unordered_set<std::string> findReachableStates(const std::vector<MooreState>& mooreAutomaton, const std::string& startState)
+std::vector<MealyState> findReachableStates(const std::vector<MealyState>& mealyStates)
 {
-    std::unordered_set<std::string> reachableStates;
-    std::queue<std::string> statesQueue;
+    if (mealyStates.empty()) return {};
 
-    // Добавляем начальное состояние
-    statesQueue.push(startState);
-    reachableStates.insert(startState);
-    while (!statesQueue.empty())
+    std::unordered_set<std::string> visited;
+    std::queue<std::string> toVisit;
+    std::vector<MealyState> reachableStates;
+
+    visited.insert(mealyStates[0].curr);
+    toVisit.push(mealyStates[0].curr);
+    reachableStates.push_back(mealyStates[0]);
+
+    while (!toVisit.empty())
     {
-        std::string currentState = statesQueue.front();
-        statesQueue.pop();
+        std::string currentState = toVisit.front();
+        toVisit.pop();
 
-        // Находим состояние в автомате
-        for (const auto& mooreState : mooreAutomaton)
+        for (const auto& state : mealyStates)
         {
-            if (mooreState.newState == currentState)
+            if (state.curr == currentState)
             {
-                // Добавляем все состояния, достижимые через переходы
-                for (const auto& transition : mooreState.transitions)
+                for (const auto& transition : state.transitions)
                 {
-                    const std::string& nextState = transition.second;
-                    if (reachableStates.find(nextState) == reachableStates.end())
+                    if (visited.find(transition.nextPos) == visited.end())
                     {
-                        reachableStates.insert(nextState);
-                        statesQueue.push(nextState);
+                        visited.insert(transition.nextPos);
+                        toVisit.push(transition.nextPos);
+
+                        for (const auto& nextState : mealyStates)
+                        {
+                            if (nextState.curr == transition.nextPos)
+                            {
+                                reachableStates.push_back(nextState);
+                                std::cout << nextState.curr << "\n";
+                                break;
+                            }
+                        }
                     }
                 }
+                break;
             }
         }
     }
+
     return reachableStates;
 }
 
@@ -126,6 +139,7 @@ std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutom
                 mooreAutomaton.push_back(newMooreState);
 
                 eqNewStateOld[mooreState] = NewMooreStateName;
+                std::cout << mooreState << " " << NewMooreStateName;
                 foundStartState = true;
                 break;
             }
@@ -150,7 +164,7 @@ std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutom
         mooreAutomaton.push_back(newMooreState);
 
         eqNewStateOld[mooreState] = NewMooreStateName;
-        foundStartState = true;
+
     }
 
     int i = 1;
@@ -220,10 +234,11 @@ std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutom
         }
     }
 
-    // Добавляем переходы для состояний Мура
+    // переходы для состояний Мура
     for (auto& mooreState : mooreAutomaton)
     {
         std::string baseState = mooreState.state.substr(0, mooreState.state.find('_'));
+        std::string partOut = mooreState.state.substr(mooreState.state.find('_') + 1);
 
         for (const auto& pos : mealyAutomaton)
         {
@@ -239,23 +254,7 @@ std::vector<MooreState> convertToMoore(const std::vector<MealyState>& mealyAutom
         }
     }
 
-
-    // Создаем новый вектор, который содержит только достижимые состояния
-    std::unordered_set<std::string> reachableStates = findReachableStates(mooreAutomaton, "q0"); // Начальное состояние
-
-
-    std::vector<MooreState> cleanedMooreAutomaton;
-
-    for (const auto& mooreState : mooreAutomaton)
-    {
-        if (reachableStates.find(mooreState.newState) != reachableStates.end())
-        {
-            cleanedMooreAutomaton.push_back(mooreState);
-        }
-    }
-
-
-    return cleanedMooreAutomaton;
+    return mooreAutomaton;
 }
 
 
@@ -332,7 +331,6 @@ void WriteMooreToFile(std::vector<MooreState>& mooreAutomaton, std::ofstream& ou
     if (outFile.is_open())
     {
 
-        // Выходы состояний Мура (outputs)
         outFile << ";";
         for (const auto& state : mooreAutomaton)
         {
@@ -340,7 +338,6 @@ void WriteMooreToFile(std::vector<MooreState>& mooreAutomaton, std::ofstream& ou
         }
         outFile << "\n";
 
-        // Названия состояний Мура (newState)
         outFile << ";";
         for (const auto& state : mooreAutomaton)
         {
@@ -348,13 +345,11 @@ void WriteMooreToFile(std::vector<MooreState>& mooreAutomaton, std::ofstream& ou
         }
         outFile << "\n";
 
-        // Транзакции по каждому символу входа
         for (const auto& trans : mooreAutomaton[0].transitions)
         {
             outFile << trans.first << ";"; // Символ входа (inputSym)
             for (const auto& state : mooreAutomaton)
             {
-                // Записываем соответствующие переходы для каждого состояния
                 outFile << state.transitions.at(trans.first) << ";";
 
             }
@@ -397,9 +392,10 @@ int main(int argc, char* argv[])
         std::vector<MealyState> mealyStates;
         mealyStates = ReadMealyToVec(mealyStates, file);
 
-        std::vector<MooreState> mooreAutomaton = convertToMoore(mealyStates);
-        WriteMooreToFile(mooreAutomaton, outFile);
+        std::vector<MealyState> reachableStates = findReachableStates(mealyStates);
 
+        std::vector<MooreState> mooreAutomaton = convertToMoore(reachableStates);
+        WriteMooreToFile(mooreAutomaton, outFile);
     }
     else if (nameOperation == "moore-to-mealy")
     {
