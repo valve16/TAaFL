@@ -91,7 +91,51 @@ std::vector<MealyState> findReachableStates(const std::vector<MealyState>& mealy
     return reachableStates;
 }
 
+std::vector<MooreState> findMooreReachableStates(const std::vector<MooreState>& mooreStates)
+{
+    if (mooreStates.empty()) return {};
 
+    std::unordered_set<std::string> visited;
+    std::queue<std::string> toVisit;
+    std::vector<MooreState> reachableStates;
+
+    visited.insert(mooreStates[0].state);
+    toVisit.push(mooreStates[0].state);
+    reachableStates.push_back(mooreStates[0]);
+
+    while (!toVisit.empty())
+    {
+        std::string currentState = toVisit.front();
+        toVisit.pop();
+
+        for (const auto& state : mooreStates)
+        {
+            if (state.state == currentState)
+            {
+                for (const auto& transition : state.transitions)
+                {
+                    if (visited.find(transition.nextPos) == visited.end())
+                    {
+                        visited.insert(transition.nextPos);
+                        toVisit.push(transition.nextPos);
+
+                        for (const auto& nextState : mooreStates)
+                        {
+                            if (nextState.state == transition.nextPos)
+                            {
+                                reachableStates.push_back(nextState);
+                                break;
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    return reachableStates;
+}
 
 
 std::vector<MealyState> mealyMin(const std::vector<MealyState>& mealyAutomaton)
@@ -628,7 +672,10 @@ int main(int argc, char* argv[])
     {
         std::vector<MooreState> mooreStates;
         mooreStates = ReadMooreToVec(mooreStates, file);
-        std::vector<MooreState> minimize = mooreMin(mooreStates);
+
+        std::vector<MooreState> reachableStates = findMooreReachableStates(mooreStates);
+
+        std::vector<MooreState> minimize = mooreMin(reachableStates);
         WriteMooreToFile(minimize, outFile);
     }
     return 0;
