@@ -125,6 +125,7 @@ std::vector<MealyState> mealyMin(const std::vector<MealyState>& mealyAutomaton)
         {
             newStateMap[state.curr] = vecOutNewStMap[outVector];
         }
+
     }
 
     //for (const auto& pair : newStateMap) 
@@ -147,13 +148,14 @@ std::vector<MealyState> mealyMin(const std::vector<MealyState>& mealyAutomaton)
             Trans newTrans;
             newTrans.inputSym = transition.inputSym;
             newTrans.nextPos = newStateMap[transition.nextPos];
+
             newTrans.outSym = transition.outSym;
             tempVec.push_back(newTrans);
         }
         tempState.curr = state.curr; //q0
         tempState.transitions = tempVec;
         NewMealyInGroup[newStateMap[tempState.curr]].push_back(tempState);
-        //std::cout << newStateMap[tempState.curr] << " " << tempState.curr << "";
+        //std::cout << newStateMap[tempState.curr] << " " << tempState.curr << "\n";
 
     }
 
@@ -164,7 +166,6 @@ std::vector<MealyState> mealyMin(const std::vector<MealyState>& mealyAutomaton)
     {
         ch++;
         int i = 0;
-        currSize = 0;
         std::map<std::string, std::string> tempNewStateMap; // q0 -> ch++
         std::map <std::string, std::vector<MealyState>> tempNewMealyInGroup; // A1, {q1, {z1, A0, y1}, {z1, A0, y1}}
 
@@ -172,7 +173,7 @@ std::vector<MealyState> mealyMin(const std::vector<MealyState>& mealyAutomaton)
         {
             std::map<std::vector<std::string>, std::string> vecNextNewStMap; // vecNext -> A0; mapOutGr
             std::set<std::vector<std::string>> vecTransSet;
-            //std::cout << group.first;
+            //std::cout << group.first << "\n";
             for (const auto& state : group.second)
             {
                 //std::cout << group.first;
@@ -180,6 +181,7 @@ std::vector<MealyState> mealyMin(const std::vector<MealyState>& mealyAutomaton)
                 for (const auto& transition : state.transitions)
                 {
                     transVector.push_back(transition.nextPos);
+
                 }
                 if (vecTransSet.insert(transVector).second)  // набор переходов A1, A2, A3
                 {
@@ -192,6 +194,7 @@ std::vector<MealyState> mealyMin(const std::vector<MealyState>& mealyAutomaton)
                 {
                     tempNewStateMap[state.curr] = vecNextNewStMap[transVector];
                 }
+                //std::cout << state.curr << " " << tempNewStateMap[state.curr] << "\n";
                 currSize += vecTransSet.size();
             }
         }
@@ -212,58 +215,22 @@ std::vector<MealyState> mealyMin(const std::vector<MealyState>& mealyAutomaton)
             tempNewMealyInGroup[tempNewStateMap[tempState.curr]].push_back(tempState);
         }
 
-        prevSize = currSize;
-        newStateMap = tempNewStateMap;
+
         NewMealyInGroup = tempNewMealyInGroup;
+        newStateMap = tempNewStateMap;
 
-    }
-
-    std::vector<MealyState> tempMealy;
-    //for (const auto& state : mealyAutomaton)
-    //{
-    //    MealyState tempState;
-    //    std::vector<Trans> tempVec;
-    //    for (const auto& transition : state.transitions)
-    //    {
-    //        Trans newTrans;
-    //        newTrans.inputSym = transition.inputSym;
-    //        newTrans.nextPos = newStateMap[transition.nextPos];
-    //        newTrans.outSym = transition.outSym;
-    //        tempVec.push_back(newTrans);
-    //    }
-    //    tempState.curr = state.curr; //q0
-    //    std::cout << state.curr;
-    //    tempState.transitions = tempVec;
-    //    NewMealyInGroup[newStateMap[tempState.curr]].push_back(tempState);
-    //    //tempMealy.push_back(tempState);
-    //}
-
-
-    for (const auto& group : NewMealyInGroup)
-    {
-        std::vector<Trans> tempVec;
-        MealyState tempState = group.second[0];
-
-        for (const auto& trans : tempState.transitions)
+        if (prevSize == currSize)
         {
-            Trans newTrans;
-            newTrans.inputSym = trans.inputSym;
-            newTrans.nextPos = trans.nextPos;
-            //std::cout << trans.nextPos <<  " "  << newTrans.nextPos << "\n";
-            newTrans.outSym = trans.outSym;
-            tempVec.push_back(newTrans);
+            break;
+        }
+        else
+        {
+            prevSize = currSize;
+            currSize = 0;
         }
 
-        tempState.curr = group.first; //A, B, C
-        tempState.transitions = tempVec;
-        NewMealyInGroup[newStateMap[tempState.curr]].push_back(tempState);
-        tempMealy.push_back(tempState);
+
     }
-
-    return tempMealy;
-
-
-}
 
 std::vector<MooreState> mooreMin(const std::vector<MooreState>& mooreAutomaton)
 {
