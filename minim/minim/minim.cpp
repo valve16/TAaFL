@@ -546,38 +546,27 @@ void WriteMooreToFile(std::vector<MooreState>& mooreAutomaton, std::ofstream& ou
     if (outFile.is_open())
     {
 
-        outFile << ";";
+        //outFile << ";";
         for (const auto& state : mooreAutomaton)
         {
-            outFile << state.output << ";";
+            outFile << ";" << state.output;
         }
         outFile << "\n";
 
-        outFile << ";";
+        //outFile << ";";
         for (const auto& state : mooreAutomaton)
         {
-            outFile << state.state << ";";
+            outFile << ";" << state.state;
         }
         outFile << "\n";
 
-        //for (const auto& trans : mooreAutomaton[0].transitions)
-        //{
-        //    outFile << trans.inputSym << ";"; // Символ входа (inputSym)
-        //    for (const auto& state : mooreAutomaton)
-        //    {
-        //        // Записываем соответствующие переходы для каждого состояния
-        //        outFile << state.transitions.at(trans.inputSym) << ";";
-
-        //    }
-        //    outFile << "\n";
-        //}
         for (size_t i = 0; i < mooreAutomaton[0].transitions.size(); ++i) {
             const auto& inputSym = mooreAutomaton[0].transitions[i].inputSym;
-            outFile << inputSym << ";";
+            outFile << inputSym;
 
             for (const auto& state : mooreAutomaton) {
                 const auto& trans = state.transitions[i];
-                outFile << trans.nextPos << ";";
+                outFile << ";" << trans.nextPos;
             }
             outFile << "\n";
         }
@@ -591,6 +580,7 @@ void WriteMooreToFile(std::vector<MooreState>& mooreAutomaton, std::ofstream& ou
     }
 
 }
+
 
 int main(int argc, char* argv[])
 {
