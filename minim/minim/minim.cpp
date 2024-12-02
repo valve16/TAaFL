@@ -397,9 +397,18 @@ std::vector<MooreState> mooreMin(const std::vector<MooreState>& mooreAutomaton)
             tempNewMooreInGroup[tempNewStateMap[tempState.state]].push_back(tempState);
         }
 
-        prevSize = currSize;
-        newStateMap = tempNewStateMap;
         NewMooreInGroup = tempNewMooreInGroup;
+        newStateMap = tempNewStateMap;
+
+        if (prevSize == currSize)
+        {
+            break;
+        }
+        else
+        {
+            prevSize = currSize;
+            currSize = 0;
+        }
 
     }
 
