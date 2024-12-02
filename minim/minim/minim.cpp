@@ -575,13 +575,16 @@ int main(int argc, char* argv[])
 
     std::string nameOperation;
 
-    //nameOperation = "mealy-to-moore";
-    //std::string inputFileName = "mealy_src.csv";
-    //std::string outputFileName = "src.csv";
+    nameOperation = argv[1];
+    std::string inputFileName = argv[2];
+    std::string outputFileName = argv[3];
 
-    nameOperation = "moore";
+
+
+
+ /*   nameOperation = "moore";
     std::string inputFileName = "5_moore.csv";
-    std::string outputFileName = "moore_opt.csv";
+    std::string outputFileName = "moore_opt.csv";*/
 
 
     std::ifstream file(inputFileName);
