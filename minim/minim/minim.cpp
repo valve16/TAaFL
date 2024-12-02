@@ -493,19 +493,19 @@ std::vector<MooreState> ReadMooreToVec(std::vector<MooreState>& positions, std::
 
 void WriteMealyToFile(std::vector<MealyState>& mealyAutomaton, std::ofstream& outFile) {
     if (outFile.is_open()) {
-        outFile << ";";
+        //outFile << ";";
         for (const auto& state : mealyAutomaton) {
-            outFile << state.curr << ";";
+            outFile << ";" << state.curr;
         }
         outFile << "\n";
 
         for (size_t i = 0; i < mealyAutomaton[0].transitions.size(); ++i) {
             const auto& inputSym = mealyAutomaton[0].transitions[i].inputSym;
-            outFile << inputSym << ";";
+            outFile << inputSym;
 
             for (const auto& state : mealyAutomaton) {
                 const auto& trans = state.transitions[i];
-                outFile << trans.nextPos << "/" << trans.outSym << ";";
+                outFile << ";" << trans.nextPos << "/" << trans.outSym;
             }
             outFile << "\n";
         }
